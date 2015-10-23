@@ -1,6 +1,4 @@
-function [u,v] = LucasKanade(It, It1, rect)
-
-%     warp = @(I, rect, p) I(rect(2)+p(2):rect(4)+p(2), rect(1)+p(1):rect(3)+p(1));
+function [u,v] = LucasKanadeAff(It, It1, rect)
 
     p = [0; 0];
     

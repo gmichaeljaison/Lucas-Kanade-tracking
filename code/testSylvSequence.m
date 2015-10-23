@@ -1,20 +1,20 @@
-load('../data/carseq.mat');
+load('../data/sylvseq.mat');
+load('../data/sylvbases.mat');
 
 nFrames = size(frames, 3);
 
-framesToCapture = [1 100 200 300 400];
+framesToCapture = [1 200 300 350 400];
 width = size(frames,2);
 oImgs = zeros(size(frames,1), width * length(framesToCapture), 3);
 
-% initial car position
-rect = [60, 117, 146, 152];
+rect = [102,62,156,108];
 
 for i = 1 : nFrames-1
     It = im2double(frames(:,:,i));
     It1 = im2double(frames(:,:,i+1));
     
-    
-    [u,v] = LucasKanadeInv(It, It1, floor(rect));
+    [u,v] = LucasKanadeBasis(It, It1, floor(rect), bases);
+%     [u,v] = LucasKanade(It, It1, floor(rect));
     
     rect = rect + [u, v, u, v];
     
@@ -29,5 +29,5 @@ for i = 1 : nFrames-1
         oImgs(:, sIdx+1 : sIdx+width, :) = It;
     end
     
-    pause(0.01);
+    pause(0.00001);
 end

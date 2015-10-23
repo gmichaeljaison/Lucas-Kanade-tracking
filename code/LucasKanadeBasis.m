@@ -1,8 +1,8 @@
-function [u,v] = LucasKanade(It, It1, rect)
+function [ u,v ] = LucasKanadeBasis( It, It1, rect, bases )
+%   consider bases as params like u,v
 
-%     warp = @(I, rect, p) I(rect(2)+p(2):rect(4)+p(2), rect(1)+p(1):rect(3)+p(1));
-
-    p = [0; 0];
+    p = [0; 0; zeros(size(bases,3),1)];
+    bases2d = reshape(bases, size(bases,1)*size(bases,2), size(bases,3));
     
     template = warp(It, rect, p);
     
@@ -22,7 +22,7 @@ function [u,v] = LucasKanade(It, It1, rect)
         dIx_p = warp(dIx, rect, p);
         dIy_p = warp(dIy, rect, p);
 
-        dI = [dIx_p(:), dIy_p(:)];
+        dI = [dIx_p(:), dIy_p(:), bases2d];
 
     %     4. Jacobian - Jacobian for translation(u,v) is [1 0; 0 1]
 
@@ -33,7 +33,7 @@ function [u,v] = LucasKanade(It, It1, rect)
         E = double(error(:));
         dP = inv(H) * dI' * E;
 
-    %     7. update P
+    %     7. update P (p(1:2)=> (u,v), p(3:end) -> weights
         p = p + dP;
         
 %         exit condition
@@ -42,8 +42,6 @@ function [u,v] = LucasKanade(It, It1, rect)
         end
         nIter = nIter + 1;
     end
-    
-    
     
     u = p(1);
     v = p(2);
