@@ -1,47 +1,50 @@
-function [ u,v ] = LucasKanadeBasis( It, It1, rect, bases )
-%   consider bases as params like u,v
+function [ u,v ] = LucasKanadeBasis(template, It1, rect, bases )
 
-    p = [0; 0; zeros(size(bases,3),1)];
-    bases2d = reshape(bases, size(bases,1)*size(bases,2), size(bases,3));
+    p = [0; 0];
+    basesV = reshape(bases, [], size(bases,3));
     
-    template = warp(It, rect, p);
+%     3. Evaluate gradient of T(x)
+    [dIx, dIy] = gradient(template);
+    dI = [dIx(:) dIy(:)];
     
-    [dIx, dIy] = gradient(double(It1));
+%     4. Jacobian - Jacobian for translation(u,v) is [1 0; 0 1]
+
+%     5. compute steepest descent images = dI * J
+
+%     6. compute Hessian
+    H = dI' * dI;
+    
     
     nIter = 1;
     while (nIter < 100)
 
     %     1. warp I: I -> I(W)
-%         imgWarped = warp(It1, rect, p);
         imgWarped = warp(It1, rect, p);
 
-    %     2. error: E = T - I(W)
-        error = template - imgWarped;
+    %     2. error: E = I(W) - T
+        error = imgWarped - template;
+        errorV = error(:);
+        
+%         find weights of bases and add with template.
+        bWeights = errorV' * basesV;
+        wBases = repmat(bWeights, size(basesV,1), 1) .* basesV;
+        
+        error = imgWarped(:) - template(:) - sum(wBases,2);
 
-    %     3. Warp gradient of I to compute dI
-        dIx_p = warp(dIx, rect, p);
-        dIy_p = warp(dIy, rect, p);
+    %     7. compute deltaP
+%         E = double(error(:));
+        dP = H \ (dI' * error);
 
-        dI = [dIx_p(:), dIy_p(:), bases2d];
-
-    %     4. Jacobian - Jacobian for translation(u,v) is [1 0; 0 1]
-
-    %     5. compute Hessian
-        H = dI' * dI;
-
-    %     6. compute deltaP
-        E = double(error(:));
-        dP = inv(H) * dI' * E;
-
-    %     7. update P (p(1:2)=> (u,v), p(3:end) -> weights
-        p = p + dP;
+    %     7. update P
+        p = p - dP;
         
 %         exit condition
-        if (abs(sum(dP)) < 0.05)
+        if (norm(dP) < 0.05)
             break;
         end
         nIter = nIter + 1;
     end
+    
     
     u = p(1);
     v = p(2);

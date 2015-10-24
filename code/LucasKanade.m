@@ -1,49 +1,45 @@
-function [u,v] = LucasKanade(It, It1, rect)
-
-%     warp = @(I, rect, p) I(rect(2)+p(2):rect(4)+p(2), rect(1)+p(1):rect(3)+p(1));
+function [u,v] = LucasKanade(template, It1, rect)
+% Lucas Kanade feature tracking implementation for translation alone
+%  uses Inverse compositional approach
+%  refer: http://www.ri.cmu.edu/pub_files/pub3/baker_simon_2002_3/baker_simon_2002_3.pdf
 
     p = [0; 0];
     
-    template = warp(It, rect, p);
+%     template = warp(It, rect, p);
     
-    [dIx, dIy] = gradient(double(It1));
+%     3. Evaluate gradient of T(x)
+    [dIx, dIy] = gradient(template);
+    dI = [dIx(:) dIy(:)];
+    
+%     4. Jacobian - Jacobian for translation(u,v) is [1 0; 0 1]
+
+%     5. compute steepest descent images = dI * J
+
+%     6. compute Hessian
+    H = dI' * dI;
+    
     
     nIter = 1;
     while (nIter < 100)
 
     %     1. warp I: I -> I(W)
-%         imgWarped = warp(It1, rect, p);
         imgWarped = warp(It1, rect, p);
 
-    %     2. error: E = T - I(W)
-        error = template - imgWarped;
+    %     2. error: E = I(W) - T
+        error = imgWarped - template;
 
-    %     3. Warp gradient of I to compute dI
-        dIx_p = warp(dIx, rect, p);
-        dIy_p = warp(dIy, rect, p);
-
-        dI = [dIx_p(:), dIy_p(:)];
-
-    %     4. Jacobian - Jacobian for translation(u,v) is [1 0; 0 1]
-
-    %     5. compute Hessian
-        H = dI' * dI;
-
-    %     6. compute deltaP
-        E = double(error(:));
-        dP = inv(H) * dI' * E;
+    %     7. compute deltaP
+        dP = H \ (dI' * error(:));
 
     %     7. update P
-        p = p + dP;
+        p = p - dP;
         
 %         exit condition
-        if (abs(sum(dP)) < 0.05)
+        if (norm(dP) < 0.05)
             break;
         end
         nIter = nIter + 1;
     end
-    
-    
     
     u = p(1);
     v = p(2);

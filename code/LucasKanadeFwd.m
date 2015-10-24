@@ -1,6 +1,8 @@
 function [u,v] = LucasKanadeFwd(It, It1, rect)
+% Lucas Kanade feature tracking implementation for translation alone
+%  uses Forward additive approach (plain old Lucas-Kanade implementation)
+%  refer: http://www.ri.cmu.edu/pub_files/pub3/baker_simon_2002_3/baker_simon_2002_3.pdf
 
-%     warp = @(I, rect, p) I(rect(2)+p(2):rect(4)+p(2), rect(1)+p(1):rect(3)+p(1));
 
     p = [0; 0];
     
@@ -31,7 +33,7 @@ function [u,v] = LucasKanadeFwd(It, It1, rect)
 
     %     6. compute deltaP
         E = double(error(:));
-        dP = inv(H) * dI' * E;
+        dP = H \ (dI' * E);
 
     %     7. update P
         p = p + dP;
@@ -42,8 +44,6 @@ function [u,v] = LucasKanadeFwd(It, It1, rect)
         end
         nIter = nIter + 1;
     end
-    
-    
     
     u = p(1);
     v = p(2);
